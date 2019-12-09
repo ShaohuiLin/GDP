@@ -13,6 +13,7 @@ from tensorflow.python.client import timeline
 from tensorflow.python.lib.io import file_io
 from tensorflow.python.platform import tf_logging as logging
 from tensorflow.python.framework import ops
+import pdb
 
 from datasets import dataset_factory
 from deployment import model_deploy
@@ -438,6 +439,13 @@ def train_step(sess, train_op, global_step, train_step_kwargs):
         gdp_mask_taylor = train_step_kwargs['gdp_mask_taylor']
         network_filters = []
         mean_tvs = [np.zeros(g[1].shape[0]) for g in gdp_mask_taylor]
+
+        for i in range(len(gdp_mask_taylor)):
+            mask_index = sess.graph.get_tensor_by_name(gdp_mask_taylor[i][0].name.replace('mask', 'mask_index'))
+            mask_value = sess.graph.get_tensor_by_name(gdp_mask_taylor[i][0].name.replace('mask', 'mask_value'))
+            mask_update = sess.graph.get_operation_by_name(gdp_mask_taylor[i][0].name.replace('mask', 'mask_update')[:-2])
+            for j in range(gdp_mask_taylor[i][0].shape[0]):
+                sess.run(mask_update, feed_dict={mask_index:j, mask_value:1})
 
         for i in range(FLAGS.taylor_step):
             tvs = sess.run([mt[1] for mt in gdp_mask_taylor])
